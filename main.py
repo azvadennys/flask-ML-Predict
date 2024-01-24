@@ -16,7 +16,7 @@ def load_model_from_storage():
     storage_client = storage.Client()
 
     # Specify the details of your model in Google Cloud Storage
-    bucket_name = 'Orchid'
+    bucket_name = 'orchid-azvaden'
     model_folder = 'mlModel'
     model_filename = 'mlModel.h5'
 
