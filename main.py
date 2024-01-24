@@ -9,15 +9,14 @@ import os
 app = Flask(__name__)
 
 # Define class names
-class_names = ['Ikan Bawal Putih', 'Ikan Belato', 'Ikan Cakalang', 'Ikan Gembolo',
-               'Ikan Gole Gole', 'Ikan Kakap Merah', 'Ikan Kembung', 'Ikan Kerapu', 'Ikan Tenggiri', 'Ikan Tuna']
+class_names = ['Coelogyne', 'Cymbidium', 'Dendrobium', 'Phalaenopsis','Vanda']
 
 def load_model_from_storage():
     # Create a client to interact with Google Cloud Storage
     storage_client = storage.Client()
 
     # Specify the details of your model in Google Cloud Storage
-    bucket_name = 'capstone-ificam'
+    bucket_name = 'Orchid'
     model_folder = 'mlModel'
     model_filename = 'mlModel.h5'
 
