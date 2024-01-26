@@ -9,24 +9,24 @@
       rel="stylesheet"
     />
   </head>
+
   <body>
     <div class="container mt-5">
-      <h2>Upload Image Classification</h2>
+      <h2>Upload Image</h2>
       <form id="imageForm" enctype="multipart/form-data">
         <div class="form-group">
-          <label for="imageUpload">Choose Image from Storage</label>
           <input
             type="file"
-            class="form-control-file"
+            class="form-control-file d-none"
             id="imageUpload"
             name="image"
             accept="image/*"
           />
-        </div>
-        <div class="form-group">
-          <label>Take a Photo</label>
+          <button type="button" class="btn btn-primary" id="chooseImage">
+            Choose Image from Storage
+          </button>
           <button type="button" class="btn btn-secondary" id="startCamera">
-            Start Camera
+            Take a Photo
           </button>
           <video
             id="video"
@@ -35,14 +35,6 @@
             autoplay
             style="display: none"
           ></video>
-          <button
-            type="button"
-            class="btn btn-primary"
-            id="capture"
-            style="display: none"
-          >
-            Capture
-          </button>
           <canvas
             id="canvas"
             width="320"
@@ -52,124 +44,154 @@
         </div>
         <button type="submit" class="btn btn-primary">Submit</button>
       </form>
-
-      <h3 class="mt-3">Preview</h3>
-      <img
-        id="imagePreview"
-        src="#"
-        alt="Image Preview"
-        class="img-fluid"
-        style="display: none"
-      />
-
-      <h3 class="mt-3">API Response</h3>
-      <div id="loading" style="display: none">
-        <p>Loading...</p>
+      <!-- Bagian lain dari form -->
+      <div class="form-group">
+        <img
+          id="imagePreview"
+          src="#"
+          alt="Image Preview"
+          class="img-fluid"
+          style="display: none"
+        />
       </div>
+      <button
+        type="button"
+        class="btn btn-success"
+        id="capture"
+        style="display: none"
+      >
+        Capture Photo
+      </button>
+      <!-- Bagian lain dari form -->
 
-      <pre id="apiResponse"></pre>
+      <div id="loading" style="display: none">Loading...</div>
+      <div id="apiResponse"></div>
     </div>
+
+    <canvas id="canvasCamera" style="display: none"></canvas>
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
       $(document).ready(function () {
-        // Fungsi untuk memeriksa ekstensi file
-        function isValidImageFile(file) {
-          var allowedExtensions = /(\.jpg|\.jpeg|\.png|\.gif)$/i
-          if (!allowedExtensions.exec(file.name)) {
-            alert(
-              'Invalid file type. Only JPG, JPEG, PNG, and GIF files are allowed.'
-            )
-            return false
+        // Tombol untuk memilih gambar dari penyimpanan
+        $("#chooseImage").click(function () {
+          $("#imageUpload").click();
+          
+          var video = document.getElementById("video");
+          video.srcObject.getTracks().forEach((track) => track.stop()); // Matikan kamera
+          $("#video").hide();
+          $("#canvas").hide();
+          $("#canvasCamera").hide();
+          $("#capture").hide();
+        });
+
+        // Saat gambar dipilih dari penyimpanan
+        $("#imageUpload").change(function () {
+          var reader = new FileReader();
+          reader.onload = function (e) {
+            $("#imagePreview").show().attr("src", e.target.result);
+            $("#canvas").hide();
+            $("#canvasCamera").hide();
+            $("#video").hide();
+          };
+          reader.readAsDataURL(this.files[0]);
+        });
+
+        $("#startCamera").click(function () {
+          navigator.mediaDevices
+            .getUserMedia({ video: true })
+            .then(function (stream) {
+              var video = document.getElementById("video");
+              video.srcObject = stream;
+              video.play();
+              $("#video").show();
+              $("#capture").show(); // Tampilkan tombol Capture
+              $("#canvas").hide();
+              $("#imagePreview").hide();
+            })
+            .catch(function (error) {
+              console.log("Something went wrong!");
+            });
+        });
+
+        $("#capture").click(function () {
+          var canvas = document.getElementById("canvas");
+          var video = document.getElementById("video");
+          var context = canvas.getContext("2d");
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+          var dataURL = canvas.toDataURL("image/png");
+          $("#canvas").show();
+          $("#imagePreview").attr("src", dataURL).show();
+          $("#video").hide();
+          $("#capture").hide();
+          $("#canvasCamera").show();
+          $("#canvas").hide(); // Sembunyikan tombol Capture
+          video.srcObject.getTracks().forEach((track) => track.stop()); // Matikan kamera
+        });
+
+        $("#video").click(function () {
+          var canvas = document.getElementById("canvas");
+          var context = canvas.getContext("2d");
+          context.drawImage(this, 0, 0, canvas.width, canvas.height);
+          var dataURL = canvas.toDataURL("image/png");
+          $("#canvas").show();
+          $("#imagePreview").attr("src", dataURL).show();
+          $("#video").hide();
+          $("#canvas").hide();
+          $("#canvasCamera").show();
+          $("#capture").hide(); // Sembunyikan tombol Capture
+          this.srcObject.getTracks().forEach((track) => track.stop());
+        });
+
+        $("#imageForm").submit(function (e) {
+          e.preventDefault();
+          var formData = new FormData();
+          var fileInput = $("#imageUpload")[0];
+          var file = fileInput.files[0];
+
+          if ($("#canvasCamera").is(":visible")) {
+            canvas.toBlob(function (blob) {
+              formData.append("image", blob, "camera.jpg");
+              sendFormData(formData);
+            });
+          } else if (file) {
+            formData.append("image", file);
+            sendFormData(formData);
+          } else {
+            alert("Please select an image.");
           }
-          return true
-        }
+        });
 
-        // Mengirim form dengan AJAX
-        $('#imageForm').submit(function (e) {
-          e.preventDefault()
+        function sendFormData(formData) {
+          $("#loading").show();
 
-          var fileInput = $('#imageUpload')[0]
-          var file = fileInput.files[0]
-          if (!file || !isValidImageFile(file)) {
-            return
-          }
-
-          var formData = new FormData(this)
-          formData.append('image', file)
-
-          // Menampilkan animasi loading
-          $('#loading').show()
-          console.log(formData)
           $.ajax({
-            url: 'https://flask-ml-predict-pcz5zqlbka-uc.a.run.app/predict',
-            type: 'POST',
+            url: "https://flask-ml-predict-pcz5zqlbka-uc.a.run.app/predict",
+            type: "POST",
             data: formData,
             contentType: false,
             processData: false,
             success: function (response) {
-              console.log(response)
-              // Menampilkan respons API
-              if (
-                response &&
-                response.accuracy &&
-                response.class &&
-                response.class_id
-              ) {
-                var resultHtml = '<p>Class: ' + response.class + '</p>'
-                resultHtml += '<p>Class ID: ' + response.class_id + '</p>'
-                resultHtml += '<p>Accuracy: ' + response.accuracy + '%</p>'
-                $('#apiResponse').html(resultHtml)
-              } else {
-                $('#apiResponse').html('Invalid response from server')
-              }
-              $('#loading').hide() // Menyembunyikan animasi loading
+              $("#apiResponse").html(
+                "Accuracy: " +
+                  response.accuracy +
+                  "%<br>" +
+                  "Class ID: " +
+                  response.class_id +
+                  "<br>" +
+                  "Class: " +
+                  response.class
+              );
+              $("#loading").hide();
             },
-            error: function (response) {
-              console.log(response)
-              var errorMessage = response.status + ': ' + response.statusText
-              $('#apiResponse').html('Error - ' + errorMessage)
-              $('#loading').hide()
-            }
-          })
-        })
-
-        // Menangani kamera
-        $('#startCamera').click(function () {
-          navigator.mediaDevices
-            .getUserMedia({ video: true })
-            .then(function (stream) {
-              video.srcObject = stream
-              video.play()
-              $('#video').show()
-              $('#capture').show()
-            })
-            .catch(function (error) {
-              console.log('Something went wrong!')
-            })
-        })
-
-        $('#capture').click(function () {
-          var canvas = document.getElementById('canvas')
-          var context = canvas.getContext('2d')
-          context.drawImage(video, 0, 0, 320, 240)
-          canvas.toBlob(function (blob) {
-            $('#imageUpload')[0].files[0] = blob
-          })
-          $('#canvas').show()
-          $('#imagePreview').hide()
-        })
-
-        // Preview gambar yang diunggah
-        $('#imageUpload').change(function () {
-          var reader = new FileReader()
-          reader.onload = function (e) {
-            $('#imagePreview').attr('src', e.target.result).show()
-          }
-          reader.readAsDataURL(this.files[0])
-        })
-      })
+            error: function (xhr) {
+              $("#apiResponse").html("Error: " + xhr.statusText);
+              $("#loading").hide();
+            },
+          });
+        }
+      });
     </script>
   </body>
 </html>
