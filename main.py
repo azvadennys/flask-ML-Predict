@@ -5,8 +5,10 @@ from google.cloud import storage
 from io import BytesIO
 import numpy as np
 import os
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app, supports_credentials=True)
 
 # Define class names
 class_names = ['Coelogyne', 'Cymbidium', 'Dendrobium', 'Phalaenopsis','Vanda']
