@@ -1,13 +1,13 @@
 from tensorflow import keras
 from tensorflow.keras.preprocessing import image
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from google.cloud import storage
 from io import BytesIO
 import numpy as np
 import os
 from flask_cors import CORS
 
-app = Flask(__name__)
+app = Flask(__name__,template_folder='templates')
 CORS(app, supports_credentials=True)
 
 # Define class names
@@ -35,6 +35,11 @@ def load_model_from_storage():
 
 # Load the model during the container startup
 model1 = load_model_from_storage()
+
+
+@app.route('/', methods=['GET'])
+def index():
+    return render_template('index.html') 
 
 @app.route('/predict', methods=['POST'])
 def predict():
