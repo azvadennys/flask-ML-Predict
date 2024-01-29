@@ -521,10 +521,17 @@
                     </div>
                 </form>
                 <div class="form-group row justify-content-center">
-                    <button type="button" class="btn btn-success col-lg-3 col-md-6 mb-2" id="capture"
-                        style="display: none">
-                        Capture Photo
-                    </button>
+                    <div class="col-6">
+                        <button type="button" class="btn btn-success col-lg-3 col-md-6 mb-2" id="capture"
+                            style="display: none">
+                            Capture Photo
+                        </button>
+                    </div>
+
+                    <div class="col-6">
+                        <button type="button" class="btn btn-success col-lg-3 col-md-6 mb-2" style="display: none"
+                            id="switchCamera">Switch Camera</button>
+                    </div>
                 </div>
                 <!-- Bagian lain dari form -->
 
@@ -684,6 +691,7 @@
                 $("#canvas").hide();
                 $("#canvasCamera").hide();
                 $("#capture").hide();
+                $("#switchCamera").hide();
             });
 
             // Saat gambar dipilih dari penyimpanan
@@ -709,17 +717,16 @@
                 reader.readAsDataURL(this.files[0]);
             });
 
-
-            $("#startCamera").click(function() {
-                navigator.mediaDevices.getUserMedia({
-                        video: true
-                    })
+            var useRearCamera = true; // Default to rear camera
+            function startCamera(constraints) {
+                navigator.mediaDevices.getUserMedia(constraints)
                     .then(function(stream) {
                         var video = document.getElementById("video");
                         video.srcObject = stream;
                         video.play();
                         $("#video").show();
-                        $("#capture").show(); // Tampilkan tombol Capture
+                        $("#capture").show(); // Show the Capture button
+                        $("#switchCamera").show(); // Show the switchCamera button
                         $("#canvas").hide();
                         $("#imagePreviewContent").hide();
                         $("#buttonSubmit").hide();
@@ -728,8 +735,31 @@
                     .catch(function(error) {
                         console.log("Something went wrong!", error);
                     });
+            }
+
+            $("#startCamera").click(function() {
+                var constraints = {
+                    video: {
+                        facingMode: (useRearCamera ? "environment" : "user")
+                    }
+                };
+                startCamera(constraints);
             });
 
+            $("#switchCamera").click(function() {
+                // Switch the camera
+                useRearCamera = !useRearCamera;
+                var video = document.getElementById("video");
+                if (video.srcObject) {
+                    video.srcObject.getTracks().forEach(track => track.stop());
+                }
+                var constraints = {
+                    video: {
+                        facingMode: (useRearCamera ? "environment" : "user")
+                    }
+                };
+                startCamera(constraints);
+            });
             $("#capture").click(function() {
                 captureImage();
             });
@@ -757,6 +787,7 @@
                 $("#imagePreviewContent").show();
                 $("#video").hide();
                 $("#capture").hide();
+                $("#switchCamera").hide();
                 $("#canvasCamera").show();
                 $("#canvas").hide();
                 $("#buttonSubmit").show();
