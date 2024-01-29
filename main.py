@@ -7,7 +7,7 @@ import numpy as np
 import os
 from flask_cors import CORS
 
-app = Flask(__name__,template_folder='templates')
+app = Flask(__name__,template_folder='gardener')
 CORS(app, supports_credentials=True)
 
 # Define class names
@@ -39,7 +39,7 @@ model1 = load_model_from_storage()
 
 @app.route('/', methods=['GET'])
 def index():
-    return render_template('index.html') 
+    return render_template('index2.html') 
 
 @app.route('/predict', methods=['POST'])
 def predict():
