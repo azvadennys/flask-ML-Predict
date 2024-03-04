@@ -11,7 +11,7 @@ app = Flask(__name__,template_folder='gardener', static_folder='gardener')
 CORS(app, supports_credentials=True)
 
 # Define class names
-class_names = ['Coelogyne', 'Cymbidium', 'Dendrobium', 'Phalaenopsis','Vanda']
+class_names = ['Coelogyne', 'Dendrobium', 'Oncidium', 'Phalaenopsis','Vanda']
 
 def load_model_from_storage():
     # Create a client to interact with Google Cloud Storage
@@ -20,10 +20,10 @@ def load_model_from_storage():
     # Specify the details of your model in Google Cloud Storage
     bucket_name = 'orchid-azvaden'
     model_folder = 'mlModel'
-    model_filename = 'mlModel.h5'
+    model_filename = 'mlModelNew.h5'
 
     # Download the model file from Google Cloud Storage to a local directory
-    local_model_path = '/tmp/mlModel.h5'
+    local_model_path = '/tmp/mlModelNew.h5'
     bucket = storage_client.get_bucket(bucket_name)
     blob = bucket.blob(os.path.join(model_folder, model_filename))
     blob.download_to_filename(local_model_path)
