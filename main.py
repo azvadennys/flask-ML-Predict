@@ -49,7 +49,7 @@ def predict():
     image_file = request.files['image']
 
     try:
-        img = image.load_img(BytesIO(image_file.read()), target_size=(224, 224))
+        img = image.load_img(BytesIO(image_file.read()), target_size=(416, 416))
         img_array = image.img_to_array(img)
         img_array /= 255
         img_array = np.expand_dims(img_array, axis=0)
