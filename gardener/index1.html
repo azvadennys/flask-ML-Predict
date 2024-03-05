@@ -190,7 +190,7 @@
                 <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.5s">
                     <div class="service-item rounded d-flex h-100">
                         <div class="service-img rounded">
-                            <img class="img-fluid" src="{{ url_for('static', filename = 'img/cymbidium.jpeg') }}"
+                            <img class="img-fluid" src="{{ url_for('static', filename = 'img/oncidium.jpg') }}"
                                 alt="" />
                         </div>
                         <div class="service-text rounded p-5">
@@ -367,7 +367,21 @@
                     </div>
                 </div>
                 <!-- Bagian lain dari form -->
+                <div class="alert alert-warning" id="unknownDetail" style="display: none">
 
+                    <h5 id="unknownInfo" class=" text-center mb-3"></h5>
+
+                    <strong>Attention:</strong> The genus classification for your recent submission could not be
+                    detected accurately. Please consider the following tips for your next photo submission:
+                    <ul>
+                        <li>Ensure the photo has higher resolution for clear and detailed visuals.</li>
+                        <li>Choose a plain and uncluttered background for improved subject visibility.</li>
+                        <li>Use optimal lighting conditions, preferably natural light, and ensure the subject is
+                            well-lit from different angles.</li>
+                        <li>Capture the subject from a well-defined and consistent angle.</li>
+                    </ul>
+                </div>
+                
                 <div id="resultPredict" class="container mb-5" style="display: none">
 
                     <h5 id="accuracy" class=" text-center mb-3"></h5>
@@ -540,6 +554,7 @@
                 var reader = new FileReader();
                 reader.onload = function(e) {
                     $("#resultPredict").hide();
+                    $("#unknownDetail").hide();
                     $("#imagePreview").show().attr("src", e.target.result);
                     $("#imagePreviewContent").show();
                     $("#canvas").hide();
@@ -564,6 +579,7 @@
                         $("#imagePreviewContent").hide();
                         $("#buttonSubmit").hide();
                         $("#resultPredict").hide();
+                        $("#unknownDetail").hide();
                     })
                     .catch(function(error) {
                         console.log("Something went wrong!", error);
@@ -651,6 +667,7 @@
                 $("#buttonSubmit").hide();
                 $("#loadingAnimation").show();
                 $("#resultPredict").hide();
+                $("#unknownDetail").hide();
                 $("#apiResponse").hide();
 
                 $.ajax({
@@ -660,26 +677,36 @@
                     contentType: false,
                     processData: false,
                     success: function(response) {
-                        displayOrchidInfo(response.class_id);
+                        console.log(response.accuracy);
+                        if (response.accuracy < 50) {
 
-                        document.getElementById("accuracy").textContent = "Accuracy " + response
-                            .accuracy + "%";
-                        $("#resultPredict").show();
-                        $("#apiResponse").html(
-                            "Accuracy: " +
-                            response.accuracy +
-                            "%<br>" +
-                            "Class ID: " +
-                            response.class_id +
-                            "<br>" +
-                            "Class: " +
-                            response.class
-                        );
+                            document.getElementById("unknownInfo").textContent = "Unknown Genus";
+                            $("#unknownDetail").show();
+
+                        } else {
+
+                            displayOrchidInfo(response.class_id);
+
+                            document.getElementById("accuracy").textContent = "Accuracy " + response
+                                .accuracy + "%";
+                            $("#resultPredict").show();
+                            $("#apiResponse").html(
+                                "Accuracy: " +
+                                response.accuracy +
+                                "%<br>" +
+                                "Class ID: " +
+                                response.class_id +
+                                "<br>" +
+                                "Class: " +
+                                response.class
+                            );
+                        }
                         $("#loadingAnimation").hide();
                     },
                     error: function(xhr) {
                         $("#apiResponse").html("Error: " + xhr.statusText);
                         $("#resultPredict").hide();
+                        $("#unknownDetail").hide();
                         $("#loadingAnimation").hide();
                     },
                 });

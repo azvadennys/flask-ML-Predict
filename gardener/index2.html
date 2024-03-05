@@ -120,13 +120,11 @@
                     </div>
                 </div>
             </div>
-            <button class="carousel-control-prev" type="button" data-bs-target="#header-carousel"
-                data-bs-slide="prev">
+            <button class="carousel-control-prev" type="button" data-bs-target="#header-carousel" data-bs-slide="prev">
                 <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                 <span class="visually-hidden">Previous</span>
             </button>
-            <button class="carousel-control-next" type="button" data-bs-target="#header-carousel"
-                data-bs-slide="next">
+            <button class="carousel-control-next" type="button" data-bs-target="#header-carousel" data-bs-slide="next">
                 <span class="carousel-control-next-icon" aria-hidden="true"></span>
                 <span class="visually-hidden">Next</span>
             </button>
@@ -360,7 +358,7 @@
                 <div class="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.5s">
                     <div class="service-item rounded d-flex h-100">
                         <div class="service-img rounded">
-                            <img class="img-fluid" src="img/cymbidium.jpeg" alt="" />
+                            <img class="img-fluid" src="img/oncidium.jpg" alt="" />
                         </div>
                         <div class="service-text rounded p-5">
                             <div class="btn-square rounded-circle mx-auto mb-3">
@@ -531,7 +529,20 @@
                     </div>
                 </div>
                 <!-- Bagian lain dari form -->
+                <div class="alert alert-warning" id="unknownDetail" style="display: none">
 
+                    <h5 id="unknownInfo" class=" text-center mb-3"></h5>
+
+                    <strong>Attention:</strong> The genus classification for your recent submission could not be
+                    detected accurately. Please consider the following tips for your next photo submission:
+                    <ul>
+                        <li>Ensure the photo has higher resolution for clear and detailed visuals.</li>
+                        <li>Choose a plain and uncluttered background for improved subject visibility.</li>
+                        <li>Use optimal lighting conditions, preferably natural light, and ensure the subject is
+                            well-lit from different angles.</li>
+                        <li>Capture the subject from a well-defined and consistent angle.</li>
+                    </ul>
+                </div>
                 <div id="resultPredict" class="container mb-5" style="display: none">
 
                     <h5 id="accuracy" class=" text-center mb-3"></h5>
@@ -637,9 +648,9 @@
     <!-- Template Javascript -->
     <script src="js/main.js"></script>
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
             document.querySelectorAll('.nav-link').forEach(link => {
-                link.addEventListener('click', function(event) {
+                link.addEventListener('click', function (event) {
                     event.preventDefault(); // Prevent default anchor behavior
 
                     const targetId = this.getAttribute('href').substring(1);
@@ -678,7 +689,7 @@
 
 
             // Tombol untuk memilih gambar dari penyimpanan
-            $("#chooseImage").click(function() {
+            $("#chooseImage").click(function () {
                 $("#buttonSubmit").hide();
                 $("#imageUpload").click();
 
@@ -692,7 +703,7 @@
             });
 
             // Saat gambar dipilih dari penyimpanan
-            $("#imageUpload").change(function() {
+            $("#imageUpload").change(function () {
                 var file = this.files[0];
                 var fileType = file["type"];
                 var validImageTypes = ["image/gif", "image/jpeg", "image/png", "image/bmp", "image/webp"];
@@ -702,8 +713,9 @@
                     return;
                 }
                 var reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = function (e) {
                     $("#resultPredict").hide();
+                    $("#unknownDetail").hide();
                     $("#imagePreview").show().attr("src", e.target.result);
                     $("#imagePreviewContent").show();
                     $("#canvas").hide();
@@ -717,7 +729,7 @@
             var useRearCamera = true; // Default to rear camera
             function startCamera(constraints) {
                 navigator.mediaDevices.getUserMedia(constraints)
-                    .then(function(stream) {
+                    .then(function (stream) {
                         var video = document.getElementById("video");
                         video.srcObject = stream;
                         video.play();
@@ -728,13 +740,14 @@
                         $("#imagePreviewContent").hide();
                         $("#buttonSubmit").hide();
                         $("#resultPredict").hide();
+                        $("#unknownDetail").hide();
                     })
-                    .catch(function(error) {
+                    .catch(function (error) {
                         console.log("Something went wrong!", error);
                     });
             }
 
-            $("#startCamera").click(function() {
+            $("#startCamera").click(function () {
                 var constraints = {
                     video: {
                         facingMode: (useRearCamera ? "environment" : "user")
@@ -743,7 +756,7 @@
                 startCamera(constraints);
             });
 
-            $("#switchCamera").click(function() {
+            $("#switchCamera").click(function () {
                 // Switch the camera
                 useRearCamera = !useRearCamera;
                 var video = document.getElementById("video");
@@ -757,11 +770,11 @@
                 };
                 startCamera(constraints);
             });
-            $("#capture").click(function() {
+            $("#capture").click(function () {
                 captureImage();
             });
 
-            $("#video").click(function() {
+            $("#video").click(function () {
                 captureImage();
             });
 
@@ -792,14 +805,14 @@
             }
 
 
-            $("#imageForm").submit(function(e) {
+            $("#imageForm").submit(function (e) {
                 e.preventDefault();
                 var formData = new FormData();
                 var fileInput = $("#imageUpload")[0];
                 var file = fileInput.files[0];
 
                 if ($("#canvasCamera").is(":visible")) {
-                    canvas.toBlob(function(blob) {
+                    canvas.toBlob(function (blob) {
                         formData.append("image", blob, "camera.jpg");
                         sendFormData(formData);
                     });
@@ -815,6 +828,7 @@
                 $("#buttonSubmit").hide();
                 $("#loadingAnimation").show();
                 $("#resultPredict").hide();
+                $("#unknownDetail").hide();
                 $("#apiResponse").hide();
 
                 $.ajax({
@@ -823,27 +837,37 @@
                     data: formData,
                     contentType: false,
                     processData: false,
-                    success: function(response) {
-                        displayOrchidInfo(response.class_id);
+                    success: function (response) {
+                        console.log(response.accuracy);
+                        if (response.accuracy < 50) {
 
-                        document.getElementById("accuracy").textContent = "Accuracy " + response
-                            .accuracy + "%";
-                        $("#resultPredict").show();
-                        $("#apiResponse").html(
-                            "Accuracy: " +
-                            response.accuracy +
-                            "%<br>" +
-                            "Class ID: " +
-                            response.class_id +
-                            "<br>" +
-                            "Class: " +
-                            response.class
-                        );
+                            document.getElementById("unknownInfo").textContent = "Unknown Genus";
+                            $("#unknownDetail").show();
+
+                        } else {
+
+                            displayOrchidInfo(response.class_id);
+
+                            document.getElementById("accuracy").textContent = "Accuracy " + response
+                                .accuracy + "%";
+                            $("#resultPredict").show();
+                            $("#apiResponse").html(
+                                "Accuracy: " +
+                                response.accuracy +
+                                "%<br>" +
+                                "Class ID: " +
+                                response.class_id +
+                                "<br>" +
+                                "Class: " +
+                                response.class
+                            );
+                        }
                         $("#loadingAnimation").hide();
                     },
-                    error: function(xhr) {
+                    error: function (xhr) {
                         $("#apiResponse").html("Error: " + xhr.statusText);
-                        $("#resultPredict").hide();
+                        $("#resultPredict").hide(); 
+                        $("#unknownDetail").hide();
                         $("#loadingAnimation").hide();
                     },
                 });
@@ -859,25 +883,25 @@
             }
         }
         const orchidDescriptions = [{
-                genus: "Coelogyne",
-                description: "Coelogyne is a diverse and widespread genus, known for its striking and often fragrant flowers. These orchids typically have a crystalline texture and can range in color from white and cream to yellow and green. They predominantly grow in cooler climates across Asia, especially in mountainous regions, and are epiphytic or lithophytic in nature. Their distinct features include a well-developed lip, often with fringed or toothed margins."
-            },
-            {
-                genus: "Dendrobium",
-                description: "Dendrobium, one of the largest orchid genera, is highly diverse in terms of habitat, form, and floral variety. These orchids are found across Asia, the Pacific Islands, and Australia. Dendrobium flowers come in a vast array of colors and sizes, with some species producing long-lasting blooms. They are adaptable and can grow in a range of environments, from rainforests to alpine regions, and are predominantly epiphytic."
-            },
-            {
-                genus: "Oncidium",
-                description: "Oncidium, popularly known as 'dancing lady' orchids, are famed for their large sprays of small, butterfly-like flowers. These orchids exhibit a wide variety of colors and patterns, with distinctive floral designs. Native to the Americas, they thrive in a broad range of environments, from semi-desert habitats to rainforests. Oncidiums are predominantly epiphytic and are known for their extensive root systems and large pseudobulbs."
-            },
-            {
-                genus: "Phalaenopsis",
-                description: "Phalaenopsis, commonly known as 'moth orchids', are renowned for their long-lasting flowers and ease of cultivation indoors. Native to tropical Asia, these orchids typically display broad, shiny leaves with blooms varying in color from white and pink to purple. Phalaenopsis flowers have a distinctive moth-like appearance and are among the most popular orchids in the commercial market. They thrive in warm, humid conditions with indirect sunlight."
-            },
-            {
-                genus: "Vanda",
-                description: "Vanda orchids are known for their vibrant, large, and often fragrant flowers. Native to tropical Asia, they exhibit a wide range of colors and patterns. Vandas are characterized by their monopodial growth habit and extensive aerial root systems. They require high humidity and abundant light to thrive and are commonly grown in baskets to allow air circulation around their roots. Vandas are popular in horticulture for their showy, long-lasting blooms."
-            }
+            genus: "Coelogyne",
+            description: "Coelogyne is a diverse and widespread genus, known for its striking and often fragrant flowers. These orchids typically have a crystalline texture and can range in color from white and cream to yellow and green. They predominantly grow in cooler climates across Asia, especially in mountainous regions, and are epiphytic or lithophytic in nature. Their distinct features include a well-developed lip, often with fringed or toothed margins."
+        },
+        {
+            genus: "Dendrobium",
+            description: "Dendrobium, one of the largest orchid genera, is highly diverse in terms of habitat, form, and floral variety. These orchids are found across Asia, the Pacific Islands, and Australia. Dendrobium flowers come in a vast array of colors and sizes, with some species producing long-lasting blooms. They are adaptable and can grow in a range of environments, from rainforests to alpine regions, and are predominantly epiphytic."
+        },
+        {
+            genus: "Oncidium",
+            description: "Oncidium, popularly known as 'dancing lady' orchids, are famed for their large sprays of small, butterfly-like flowers. These orchids exhibit a wide variety of colors and patterns, with distinctive floral designs. Native to the Americas, they thrive in a broad range of environments, from semi-desert habitats to rainforests. Oncidiums are predominantly epiphytic and are known for their extensive root systems and large pseudobulbs."
+        },
+        {
+            genus: "Phalaenopsis",
+            description: "Phalaenopsis, commonly known as 'moth orchids', are renowned for their long-lasting flowers and ease of cultivation indoors. Native to tropical Asia, these orchids typically display broad, shiny leaves with blooms varying in color from white and pink to purple. Phalaenopsis flowers have a distinctive moth-like appearance and are among the most popular orchids in the commercial market. They thrive in warm, humid conditions with indirect sunlight."
+        },
+        {
+            genus: "Vanda",
+            description: "Vanda orchids are known for their vibrant, large, and often fragrant flowers. Native to tropical Asia, they exhibit a wide range of colors and patterns. Vandas are characterized by their monopodial growth habit and extensive aerial root systems. They require high humidity and abundant light to thrive and are commonly grown in baskets to allow air circulation around their roots. Vandas are popular in horticulture for their showy, long-lasting blooms."
+        }
         ];
     </script>
 </body>
